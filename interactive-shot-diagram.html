@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Shot Diagram - Drag & Drop</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 20px;
+            color: white;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .instructions h3 {
+            color: #ffd700;
+            margin-top: 0;
+        }
+        
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        .table {
+            width: 900px;
+            height: 450px;
+            background: #1a472a;
+            border: 12px solid #8b4513;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+        
+        .baulk-line {
+            position: absolute;
+            left: 20%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: white;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: white;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .spot {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.3;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        
+        .ball {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 3px solid #333;
+            cursor: move;
+            user-select: none;
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .ball:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        
+        .ball.dragging {
+            opacity: 0.8;
+            cursor: grabbing;
+            z-index: 101;
+        }
+        
+        .white { background: white; color: black; }
+        .black { background: black; color: white; }
+        .red { background: #cc0000; color: white; }
+        
+        .target { 
+            box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700, 0 4px 8px rgba(0,0,0,0.3);
+            animation: glow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700, 0 4px 8px rgba(0,0,0,0.3); }
+            50% { box-shadow: 0 0 35px #ffd700, 0 0 60px #ffd700, 0 6px 12px rgba(0,0,0,0.4); }
+        }
+        
+        .line {
+            position: absolute;
+            height: 6px;
+            transform-origin: 0 50%;
+            pointer-events: none;
+        }
+        
+        .red-line {
+            background: #ff0000;
+            box-shadow: 0 0 10px rgba(255,0,0,0.8);
+            z-index: 3;
+        }
+        
+        .yellow-line {
+            background: #ffd700;
+            box-shadow: 0 0 15px rgba(255,215,0,0.9);
+            z-index: 2;
+        }
+        
+        .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 18px solid;
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            z-index: 4;
+            pointer-events: none;
+        }
+        
+        .red-arrow {
+            border-left-color: #ff0000;
+            filter: drop-shadow(0 0 8px rgba(255,0,0,0.8));
+        }
+        
+        .yellow-arrow {
+            border-left-color: #ffd700;
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.9));
+        }
+        
+        .path-point {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,215,0,0.6);
+            border: 3px solid #ffd700;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            z-index: 50;
+            box-shadow: 0 0 15px rgba(255,215,0,0.8);
+        }
+        
+        .path-point:hover {
+            background: rgba(255,215,0,0.8);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        
+        .path-point.dragging {
+            opacity: 0.8;
+            cursor: grabbing;
+        }
+        
+        .pocket-point {
+            width: 20px;
+            height: 20px;
+            background: rgba(255,0,0,0.6);
+            border: 3px solid #ff0000;
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            cursor: move;
+            z-index: 50;
+            box-shadow: 0 0 15px rgba(255,0,0,0.8);
+        }
+        
+        .pocket-point:hover {
+            background: rgba(255,0,0,0.8);
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        button {
+            background: #ffd700;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        button:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            background: rgba(0,0,0,0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        
+        .coordinates {
+            background: rgba(0,0,0,0.5);
+            padding: 10px 15px;
+            border-radius: 5px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎱 Interactive Shot Diagram - Drag & Drop Editor</h1>
+        
+        <div class="instructions">
+            <h3>🖱️ How to Use - Just Drag Everything!</h3>
+            <ul>
+                <li><strong>Drag balls</strong> to position them anywhere on the table</li>
+                <li><strong>Drag red dot</strong> (at end of red line) to change where black goes to pocket</li>
+                <li><strong>Drag yellow dots</strong> along yellow line to shape the white ball's path</li>
+                <li><strong>Add/Remove points</strong> on yellow path using buttons below</li>
+                <li><strong>Save your diagrams</strong> - create up to 3 presets for different shots</li>
+                <li><strong>Everything updates in real-time!</strong></li>
+            </ul>
+        </div>
+        
+        <div class="table-container">
+            <div id="table" class="table">
+                <div class="baulk-line"></div>
+                <div class="center-line"></div>
+                <!-- Spots -->
+                <div class="spot" style="left: 20%; top: 50%;"></div>
+                <div class="spot" style="left: 50%; top: 50%;"></div>
+                <div class="spot" style="left: 75%; top: 50%;"></div>
+                <div class="spot" style="left: 92%; top: 50%;"></div>
+            </div>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div style="width: 50px; height: 6px; background: #ff0000; box-shadow: 0 0 8px #ff0000; border-radius: 3px;"></div>
+                <span><strong>RED LINE</strong> = Black to pocket (drag red dot)</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 50px; height: 6px; background: #ffd700; box-shadow: 0 0 8px #ffd700; border-radius: 3px;"></div>
+                <span><strong>YELLOW LINE</strong> = White path after (drag yellow dots)</span>
+            </div>
+            <div class="legend-item">
+                <div class="ball red target" style="position: static; transform: none; margin: 0;">R</div>
+                <span><strong>GLOWING RED</strong> = Target position (drag to move)</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3 style="text-align: center; color: #ffd700;">⚙️ Controls</h3>
+            <div class="button-group">
+                <button onclick="addPathPoint()">➕ Add Yellow Path Point</button>
+                <button onclick="removePathPoint()">➖ Remove Last Point</button>
+                <button onclick="savePreset(1)">💾 Save Preset 1</button>
+                <button onclick="savePreset(2)">💾 Save Preset 2</button>
+                <button onclick="savePreset(3)">💾 Save Preset 3</button>
+                <button onclick="loadPreset(1)">📂 Load Preset 1</button>
+                <button onclick="loadPreset(2)">📂 Load Preset 2</button>
+                <button onclick="loadPreset(3)">📂 Load Preset 3</button>
+                <button onclick="resetToExample()">↺ Reset Example</button>
+            </div>
+        </div>
+        
+        <div class="coordinates" id="coords">
+            Mouse: X=0, Y=0
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let state = {
+            white: {x: 60, y: 50},
+            black: {x: 92, y: 50},
+            red: {x: 40, y: 50},
+            pocket: {x: 98, y: 50},
+            path: [
+                {x: 60, y: 50},  // Start at white
+                {x: 92, y: 50},  // Contact with black
+                {x: 70, y: 50},  // Mid point
+                {x: 42, y: 50}   // End near red
+            ]
+        };
+        
+        let dragging = null;
+        let dragType = null; // 'ball', 'pocket', 'path'
+        let dragIndex = null;
+        
+        const table = document.getElementById('table');
+        const tableRect = table.getBoundingClientRect();
+        
+        // Update coordinates display
+        table.addEventListener('mousemove', (e) => {
+            const rect = table.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+            const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+            document.getElementById('coords').textContent = `Mouse: X=${x}, Y=${y}`;
+        });
+        
+        function getTableCoords(clientX, clientY) {
+            const rect = table.getBoundingClientRect();
+            const x = Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100));
+            const y = Math.max(0, Math.min(100, (clientY - rect.top) / rect.height * 100));
+            return {x, y};
+        }
+        
+        function drawDiagram() {
+            // Clear
+            table.innerHTML = `
+                <div class="baulk-line"></div>
+                <div class="center-line"></div>
+                <div class="spot" style="left: 20%; top: 50%;"></div>
+                <div class="spot" style="left: 50%; top: 50%;"></div>
+                <div class="spot" style="left: 75%; top: 50%;"></div>
+                <div class="spot" style="left: 92%; top: 50%;"></div>
+            `;
+            
+            // Draw red line (black to pocket)
+            drawLine(state.black.x, state.black.y, state.pocket.x, state.pocket.y, 'red-line', 'red-arrow');
+            
+            // Draw yellow path
+            for (let i = 0; i < state.path.length - 1; i++) {
+                drawLine(state.path[i].x, state.path[i].y, state.path[i+1].x, state.path[i+1].y, 'yellow-line', i === state.path.length - 2 ? 'yellow-arrow' : null);
+            }
+            
+            // Draw pocket control point
+            const pocketPoint = document.createElement('div');
+            pocketPoint.className = 'pocket-point';
+            pocketPoint.style.left = state.pocket.x + '%';
+            pocketPoint.style.top = state.pocket.y + '%';
+            pocketPoint.dataset.type = 'pocket';
+            pocketPoint.title = 'Drag to change pocket position';
+            table.appendChild(pocketPoint);
+            
+            // Draw path control points (skip first point which is white ball)
+            for (let i = 1; i < state.path.length; i++) {
+                const pathPoint = document.createElement('div');
+                pathPoint.className = 'path-point';
+                pathPoint.style.left = state.path[i].x + '%';
+                pathPoint.style.top = state.path[i].y + '%';
+                pathPoint.dataset.type = 'path';
+                pathPoint.dataset.index = i;
+                pathPoint.title = `Path point ${i}: Drag to adjust`;
+                table.appendChild(pathPoint);
+            }
+            
+            // Draw balls
+            drawBall(state.white.x, state.white.y, 'white', 'W', 'white');
+            drawBall(state.black.x, state.black.y, 'black', 'Bk', 'black');
+            drawBall(state.red.x, state.red.y, 'red target', 'R', 'red');
+            
+            // Re-attach event listeners
+            attachDragListeners();
+        }
+        
+        function drawLine(x1, y1, x2, y2, lineClass, arrowClass) {
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            const line = document.createElement('div');
+            line.className = `line ${lineClass}`;
+            line.style.left = x1 + '%';
+            line.style.top = y1 + '%';
+            line.style.width = length + '%';
+            line.style.transform = `rotate(${angle}deg)`;
+            table.appendChild(line);
+            
+            if (arrowClass) {
+                const arrow = document.createElement('div');
+                arrow.className = `arrow ${arrowClass}`;
+                arrow.style.left = x2 + '%';
+                arrow.style.top = y2 + '%';
+                arrow.style.transform = `translate(-18px, -11px) rotate(${angle}deg)`;
+                table.appendChild(arrow);
+            }
+        }
+        
+        function drawBall(x, y, className, label, type) {
+            const ball = document.createElement('div');
+            ball.className = `ball ${className}`;
+            ball.style.left = x + '%';
+            ball.style.top = y + '%';
+            ball.textContent = label;
+            ball.dataset.type = type;
+            ball.title = `Drag to move ${label}`;
+            table.appendChild(ball);
+        }
+        
+        function attachDragListeners() {
+            const balls = table.querySelectorAll('.ball');
+            const pockets = table.querySelectorAll('.pocket-point');
+            const paths = table.querySelectorAll('.path-point');
+            
+            [...balls, ...pockets, ...paths].forEach(el => {
+                el.addEventListener('mousedown', startDrag);
+            });
+        }
+        
+        function startDrag(e) {
+            e.preventDefault();
+            dragging = e.target;
+            dragType = dragging.dataset.type;
+            dragIndex = dragging.dataset.index ? parseInt(dragging.dataset.index) : null;
+            dragging.classList.add('dragging');
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        }
+        
+        function drag(e) {
+            if (!dragging) return;
+            
+            const coords = getTableCoords(e.clientX, e.clientY);
+            
+            if (dragType === 'white') {
+                state.white = coords;
+                state.path[0] = coords; // Update first path point
+            } else if (dragType === 'black') {
+                state.black = coords;
+            } else if (dragType === 'red') {
+                state.red = coords;
+            } else if (dragType === 'pocket') {
+                state.pocket = coords;
+            } else if (dragType === 'path' && dragIndex !== null) {
+                state.path[dragIndex] = coords;
+            }
+            
+            drawDiagram();
+        }
+        
+        function stopDrag() {
+            if (dragging) {
+                dragging.classList.remove('dragging');
+                dragging = null;
+                dragType = null;
+                dragIndex = null;
+            }
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+        
+        function addPathPoint() {
+            if (state.path.length >= 6) {
+                alert('Maximum 6 path points!');
+                return;
+            }
+            // Add point between last two points
+            const lastIdx = state.path.length - 1;
+            const newPoint = {
+                x: (state.path[lastIdx].x + state.path[lastIdx-1].x) / 2,
+                y: (state.path[lastIdx].y + state.path[lastIdx-1].y) / 2
+            };
+            state.path.splice(lastIdx, 0, newPoint);
+            drawDiagram();
+        }
+        
+        function removePathPoint() {
+            if (state.path.length <= 2) {
+                alert('Need at least 2 path points!');
+                return;
+            }
+            state.path.splice(state.path.length - 1, 1);
+            drawDiagram();
+        }
+        
+        function savePreset(num) {
+            localStorage.setItem(`snookerPreset${num}`, JSON.stringify(state));
+            alert(`Preset ${num} saved!`);
+        }
+        
+        function loadPreset(num) {
+            const preset = localStorage.getItem(`snookerPreset${num}`);
+            if (preset) {
+                state = JSON.parse(preset);
+                drawDiagram();
+                alert(`Preset ${num} loaded!`);
+            } else {
+                alert(`No preset ${num} saved yet!`);
+            }
+        }
+        
+        function resetToExample() {
+            state = {
+                white: {x: 60, y: 50},
+                black: {x: 92, y: 50},
+                red: {x: 40, y: 50},
+                pocket: {x: 98, y: 50},
+                path: [
+                    {x: 60, y: 50},
+                    {x: 92, y: 50},
+                    {x: 70, y: 50},
+                    {x: 42, y: 50}
+                ]
+            };
+            drawDiagram();
+        }
+        
+        // Initial draw
+        drawDiagram();
+        
+        // Check if we should load data from practice tracker
+        const dataToLoad = sessionStorage.getItem('diagramToEdit');
+        if (dataToLoad) {
+            state = JSON.parse(dataToLoad);
+            drawDiagram();
+            sessionStorage.removeItem('diagramToEdit'); // Clear after loading
+            alert('Diagram loaded from practice tracker! Drag to customize, then save as preset.');
+        }
+    </script>
+</body>
+</html>
