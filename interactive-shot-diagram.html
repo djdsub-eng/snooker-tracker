@@ -409,8 +409,19 @@
                 <div class="spot" style="left: 92%; top: 50%;"></div>
             `;
             
-            // Draw white aiming line (white to black)
-            drawLine(state.white.x, state.white.y, state.black.x, state.black.y, 'white-line', null);
+            // Calculate contact point (where white ball contacts black ball)
+            // The contact point is 1 ball radius away from black ball center
+            const dx = state.black.x - state.white.x;
+            const dy = state.black.y - state.white.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const ballRadius = 2.5; // As percentage of table (approximate)
+            
+            // Contact point is ballRadius distance back from black ball center
+            const contactX = state.black.x - (dx / distance) * ballRadius;
+            const contactY = state.black.y - (dy / distance) * ballRadius;
+            
+            // Draw white aiming line (white to contact point on black)
+            drawLine(state.white.x, state.white.y, contactX, contactY, 'white-line', null);
             
             // Draw red line (black to pocket)
             drawLine(state.black.x, state.black.y, state.pocket.x, state.pocket.y, 'red-line', 'red-arrow');
