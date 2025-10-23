@@ -154,6 +154,13 @@
             z-index: 2;
         }
         
+        .white-line {
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(255,255,255,0.6);
+            z-index: 1;
+            border: 1px dashed rgba(200, 200, 200, 0.8);
+        }
+        
         .arrow {
             position: absolute;
             width: 0;
@@ -317,6 +324,10 @@
         
         <div class="legend">
             <div class="legend-item">
+                <div style="width: 50px; height: 6px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(200,200,200,0.8); box-shadow: 0 0 8px rgba(255,255,255,0.6); border-radius: 3px;"></div>
+                <span><strong>WHITE LINE</strong> = Aiming line (white to black)</span>
+            </div>
+            <div class="legend-item">
                 <div style="width: 50px; height: 6px; background: #ff0000; box-shadow: 0 0 8px #ff0000; border-radius: 3px;"></div>
                 <span><strong>RED LINE</strong> = Black to pocket (drag red dot)</span>
             </div>
@@ -397,6 +408,9 @@
                 <div class="spot" style="left: 75%; top: 50%;"></div>
                 <div class="spot" style="left: 92%; top: 50%;"></div>
             `;
+            
+            // Draw white aiming line (white to black)
+            drawLine(state.white.x, state.white.y, state.black.x, state.black.y, 'white-line', null);
             
             // Draw red line (black to pocket)
             drawLine(state.black.x, state.black.y, state.pocket.x, state.pocket.y, 'red-line', 'red-arrow');
