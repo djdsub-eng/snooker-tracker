@@ -183,43 +183,54 @@
         }
         
         .path-point {
-            width: 20px;
-            height: 20px;
-            background: rgba(255,215,0,0.6);
-            border: 3px solid #ffd700;
+            width: 28px;
+            height: 28px;
+            background: rgba(255,215,0,0.9);
+            border: 4px solid #ffd700;
             border-radius: 50%;
             position: absolute;
             transform: translate(-50%, -50%);
             cursor: move;
-            z-index: 50;
-            box-shadow: 0 0 15px rgba(255,215,0,0.8);
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,215,0,0.5);
+            transition: transform 0.1s;
         }
         
         .path-point:hover {
-            background: rgba(255,215,0,0.8);
-            transform: translate(-50%, -50%) scale(1.2);
+            background: rgba(255,255,0,1);
+            transform: translate(-50%, -50%) scale(1.3);
+            box-shadow: 0 0 30px rgba(255,215,0,1);
         }
         
         .path-point.dragging {
-            opacity: 0.8;
+            opacity: 0.9;
             cursor: grabbing;
+            transform: translate(-50%, -50%) scale(1.2);
         }
         
         .pocket-point {
-            width: 20px;
-            height: 20px;
-            background: rgba(255,0,0,0.6);
-            border: 3px solid #ff0000;
+            width: 28px;
+            height: 28px;
+            background: rgba(255,0,0,0.9);
+            border: 4px solid #ff0000;
             border-radius: 50%;
             position: absolute;
             transform: translate(-50%, -50%);
             cursor: move;
-            z-index: 50;
-            box-shadow: 0 0 15px rgba(255,0,0,0.8);
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255,0,0,1), 0 0 40px rgba(255,0,0,0.5);
+            transition: transform 0.1s;
         }
         
         .pocket-point:hover {
-            background: rgba(255,0,0,0.8);
+            background: rgba(255,50,50,1);
+            transform: translate(-50%, -50%) scale(1.3);
+            box-shadow: 0 0 30px rgba(255,0,0,1);
+        }
+        
+        .pocket-point.dragging {
+            opacity: 0.9;
+            cursor: grabbing;
             transform: translate(-50%, -50%) scale(1.2);
         }
         
@@ -501,6 +512,7 @@
             
             [...balls, ...pockets, ...paths].forEach(el => {
                 el.addEventListener('mousedown', startDrag);
+                el.addEventListener('touchstart', startDrag);
             });
         }
         
@@ -513,12 +525,17 @@
             
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('touchend', stopDrag);
         }
         
         function drag(e) {
             if (!dragging) return;
+            e.preventDefault();
             
-            const coords = getTableCoords(e.clientX, e.clientY);
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const coords = getTableCoords(clientX, clientY);
             
             if (dragType === 'white') {
                 state.white = coords;
@@ -545,6 +562,8 @@
             }
             document.removeEventListener('mousemove', drag);
             document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('touchend', stopDrag);
         }
         
         function addPathPoint() {
