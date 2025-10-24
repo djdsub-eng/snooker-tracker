@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Snooker Diagram</title>
+    <title>Interactive Snooker Diagram - Clean</title>
     <style>
         * {
             margin: 0;
@@ -74,7 +74,7 @@
         .table {
             position: relative;
             width: 100%;
-            padding-bottom: 50%;
+            padding-bottom: 50%; /* 2:1 aspect ratio */
             background: linear-gradient(135deg, #0d7a3f 0%, #0a5f32 100%);
             border: 15px solid #8B4513;
             border-radius: 10px;
@@ -267,7 +267,7 @@
                 <li><strong>Drag the balls</strong> (white, black, red) to reposition them</li>
                 <li><strong>Drag the RED dot</strong> to change where the black ball goes (pocket target)</li>
                 <li><strong>Drag the YELLOW dots</strong> to shape the white ball's path</li>
-                <li><strong>Add/Remove yellow dots</strong> using buttons below (up to 8 control points)</li>
+                <li><strong>Add/Remove yellow dots</strong> using buttons below (2-6 control points)</li>
                 <li><strong>Save presets</strong> to remember your shot setups</li>
             </ul>
         </div>
@@ -283,6 +283,7 @@
             <button onclick="addPathPoint()">➕ Add Yellow Dot</button>
             <button onclick="removePathPoint()">➖ Remove Yellow Dot</button>
             <button onclick="resetDiagram()">🔄 Reset</button>
+            <button onclick="saveAndClose()" style="background: #28a745;">💾 Save & Close</button>
         </div>
         
         <div class="controls">
@@ -344,15 +345,16 @@
     </div>
 
     <script>
+        // State - using simple percentage coordinates
         let state = {
             white: { x: 85, y: 50 },
             black: { x: 60, y: 50 },
             red: { x: 40, y: 50 },
             pocket: { x: 8, y: 50 },
             path: [
-                { x: 85, y: 50 },
-                { x: 55, y: 35 },
-                { x: 8, y: 50 }
+                { x: 85, y: 50 },  // Start at white ball
+                { x: 55, y: 35 },  // Curve point 1
+                { x: 8, y: 50 }    // End at pocket
             ]
         };
 
@@ -362,32 +364,66 @@
         let dragIndex = null;
 
         function init() {
+            // Load diagram from sessionStorage if it exists
+            const savedDiagram = sessionStorage.getItem('diagramToEdit');
+            if (savedDiagram) {
+                try {
+                    const data = JSON.parse(savedDiagram);
+                    // Convert the practice log format to interactive editor format
+                    if (data.white) state.white = data.white;
+                    if (data.black) state.black = data.black;
+                    if (data.red) state.red = data.red;
+                    if (data.pocket) state.pocket = data.pocket;
+                    if (data.path) state.path = data.path;
+                    console.log('Loaded diagram from practice log:', data);
+                } catch (e) {
+                    console.error('Error loading diagram:', e);
+                }
+            }
+            
             drawDiagram();
             setupEventListeners();
+        }
+        
+        function saveToSessionStorage() {
+            // Save current state back to sessionStorage in real-time
+            const saveData = {
+                white: state.white,
+                black: state.black,
+                red: state.red,
+                pocket: state.pocket,
+                path: state.path
+            };
+            sessionStorage.setItem('diagramToEdit', JSON.stringify(saveData));
+            console.log('Auto-saved to session storage');
         }
 
         function drawDiagram() {
             const table = document.getElementById('table');
             
+            // Clear existing elements (except static ones)
             Array.from(table.children).forEach(child => {
                 if (!child.classList.contains('baulk-line') && !child.classList.contains('center-line')) {
                     child.remove();
                 }
             });
 
+            // Create SVG for lines
             const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svg.style.pointerEvents = 'none';
             table.appendChild(svg);
 
+            // Calculate contact point for white line (where white touches black)
             const dx = state.black.x - state.white.x;
             const dy = state.black.y - state.white.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const ballRadiusPercent = 2;
+            const ballRadiusPercent = 2; // Ball radius in percentage of table width
             const contactPoint = {
                 x: state.black.x - (dx / distance) * ballRadiusPercent,
                 y: state.black.y - (dy / distance) * ballRadiusPercent
             };
 
+            // White aiming line (white ball center to contact point on black)
             const whiteLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             whiteLine.setAttribute('x1', state.white.x + '%');
             whiteLine.setAttribute('y1', state.white.y + '%');
@@ -398,6 +434,7 @@
             whiteLine.setAttribute('stroke-dasharray', '5,5');
             svg.appendChild(whiteLine);
 
+            // Red line (black ball center to pocket)
             const redLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
             redLine.setAttribute('x1', state.black.x + '%');
             redLine.setAttribute('y1', state.black.y + '%');
@@ -407,6 +444,8 @@
             redLine.setAttribute('stroke-width', '4');
             svg.appendChild(redLine);
 
+            // Yellow curved path - THE CUE BALL PATH
+            // Draw as individual line segments for better visibility
             if (state.path.length >= 2) {
                 for (let i = 0; i < state.path.length - 1; i++) {
                     const segment = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -419,14 +458,19 @@
                     segment.setAttribute('stroke-linecap', 'round');
                     svg.appendChild(segment);
                 }
+                console.log('Yellow path drawn with', state.path.length, 'points as line segments');
             }
 
+            // Draw balls
             drawBall('white', state.white.x, state.white.y, 'white');
             drawBall('black', state.black.x, state.black.y, 'black');
             drawBall('red', state.red.x, state.red.y, 'red');
 
+            // Draw control dots
+            // Red dot for pocket control
             drawControlDot('pocket', state.pocket.x, state.pocket.y, 'pocket-dot');
             
+            // Yellow dots for path control (skip first point at white ball, skip last point at pocket)
             for (let i = 1; i < state.path.length - 1; i++) {
                 drawControlDot('path', state.path[i].x, state.path[i].y, 'path-dot', i);
             }
@@ -505,6 +549,7 @@
             const x = ((clientX - rect.left) / rect.width) * 100;
             const y = ((clientY - rect.top) / rect.height) * 100;
             
+            // Constrain to table
             const constrainedX = Math.max(2, Math.min(98, x));
             const constrainedY = Math.max(2, Math.min(98, y));
             
@@ -513,6 +558,7 @@
                 state[ballId].x = constrainedX;
                 state[ballId].y = constrainedY;
                 
+                // Update white ball path start
                 if (ballId === 'white') {
                     state.path[0].x = constrainedX;
                     state.path[0].y = constrainedY;
@@ -520,6 +566,7 @@
             } else if (dragType === 'pocket') {
                 state.pocket.x = constrainedX;
                 state.pocket.y = constrainedY;
+                // Update path end point
                 state.path[state.path.length - 1].x = constrainedX;
                 state.path[state.path.length - 1].y = constrainedY;
             } else if (dragType === 'path') {
@@ -528,6 +575,7 @@
             }
             
             drawDiagram();
+            saveToSessionStorage(); // Auto-save in real-time
         }
 
         function stopDrag(e) {
@@ -544,11 +592,13 @@
         }
 
         function addPathPoint() {
+            // Max 10 path points total (including start and end)
             if (state.path.length >= 10) {
                 alert('⚠️ Maximum 10 path points!');
                 return;
             }
             
+            // Add between last two points
             const lastIdx = state.path.length - 1;
             const newPoint = {
                 x: (state.path[lastIdx - 1].x + state.path[lastIdx].x) / 2,
@@ -557,16 +607,20 @@
             
             state.path.splice(lastIdx, 0, newPoint);
             drawDiagram();
+            saveToSessionStorage(); // Auto-save
         }
 
         function removePathPoint() {
+            // Min 2 points (start and end)
             if (state.path.length <= 2) {
                 alert('⚠️ Need at least 2 path points!');
                 return;
             }
             
+            // Remove second-to-last (keep start and end)
             state.path.splice(state.path.length - 2, 1);
             drawDiagram();
+            saveToSessionStorage(); // Auto-save
         }
 
         function resetDiagram() {
@@ -583,31 +637,30 @@
                     ]
                 };
                 drawDiagram();
+                saveToSessionStorage(); // Auto-save
             }
         }
 
         function savePreset(num) {
-            try {
-                localStorage.setItem(`snookerPreset${num}`, JSON.stringify(state));
-                alert(`✅ Preset ${num} saved!`);
-            } catch(e) {
-                alert('⚠️ Could not save preset');
-            }
+            localStorage.setItem(`snookerPreset${num}`, JSON.stringify(state));
+            alert(`✅ Preset ${num} saved!`);
         }
 
         function loadPreset(num) {
-            try {
-                const preset = localStorage.getItem(`snookerPreset${num}`);
-                if (preset) {
-                    state = JSON.parse(preset);
-                    drawDiagram();
-                    alert(`✅ Preset ${num} loaded!`);
-                } else {
-                    alert(`❌ No preset ${num} saved yet!`);
-                }
-            } catch(e) {
-                alert('⚠️ Could not load preset');
+            const preset = localStorage.getItem(`snookerPreset${num}`);
+            if (preset) {
+                state = JSON.parse(preset);
+                drawDiagram();
+                saveToSessionStorage(); // Auto-save after loading preset
+                alert(`✅ Preset ${num} loaded!`);
+            } else {
+                alert(`❌ No preset ${num} saved yet!`);
             }
+        }
+        
+        function saveAndClose() {
+            saveToSessionStorage();
+            alert('✅ Changes saved! Go back to the practice log and refresh the page to see your changes.');
         }
 
         window.addEventListener('load', init);
