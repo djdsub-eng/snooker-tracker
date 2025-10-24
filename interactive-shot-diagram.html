@@ -3,260 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Shot Diagram - Drag & Drop</title>
+    <title>Interactive Snooker Diagram - Clean</title>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
         
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a472a 0%, #2d5f3f 100%);
             color: white;
-            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
         h1 {
             text-align: center;
-            color: #ffd700;
+            margin-bottom: 20px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
         
         .instructions {
-            background: rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            backdrop-filter: blur(10px);
         }
         
         .instructions h3 {
+            margin-bottom: 10px;
+        }
+        
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .instructions li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
             color: #ffd700;
-            margin-top: 0;
+            font-weight: bold;
         }
         
         .table-container {
-            background: white;
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            background: #0a4d2e;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
         
         .table {
-            width: 900px;
-            height: 450px;
-            background: #1a472a;
-            border: 12px solid #8b4513;
             position: relative;
-            margin: 0 auto;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-            cursor: crosshair;
+            width: 100%;
+            padding-bottom: 50%; /* 2:1 aspect ratio */
+            background: linear-gradient(135deg, #0d7a3f 0%, #0a5f32 100%);
+            border: 15px solid #8B4513;
+            border-radius: 10px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+            overflow: visible;
         }
         
         .baulk-line {
             position: absolute;
             left: 20%;
             top: 0;
-            bottom: 0;
             width: 2px;
-            background: white;
-            opacity: 0.2;
-            pointer-events: none;
+            height: 100%;
+            background: rgba(255,255,255,0.3);
         }
         
         .center-line {
             position: absolute;
             left: 50%;
             top: 0;
-            bottom: 0;
             width: 2px;
-            background: white;
-            opacity: 0.2;
-            pointer-events: none;
-        }
-        
-        .spot {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.3;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
         }
         
         .ball {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
             position: absolute;
-            transform: translate(-50%, -50%);
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            border: 3px solid #333;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             cursor: move;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4),
+                        inset -5px -5px 10px rgba(0,0,0,0.3),
+                        inset 5px 5px 10px rgba(255,255,255,0.3);
+            z-index: 10;
+            transition: transform 0.1s;
             user-select: none;
-            z-index: 100;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
         
         .ball:hover {
             transform: translate(-50%, -50%) scale(1.1);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            z-index: 11;
         }
         
-        .ball.dragging {
-            opacity: 0.8;
+        .ball:active {
             cursor: grabbing;
-            z-index: 101;
         }
         
-        .white { background: white; color: black; }
-        .black { background: black; color: white; }
-        .red { background: #cc0000; color: white; }
-        
-        .target { 
-            box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700, 0 4px 8px rgba(0,0,0,0.3);
-            animation: glow 1.5s ease-in-out infinite;
+        .white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
         }
         
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700, 0 4px 8px rgba(0,0,0,0.3); }
-            50% { box-shadow: 0 0 35px #ffd700, 0 0 60px #ffd700, 0 6px 12px rgba(0,0,0,0.4); }
+        .black {
+            background: radial-gradient(circle at 30% 30%, #333333, #000000);
         }
         
-        .line {
+        .red {
+            background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
+        }
+        
+        svg {
             position: absolute;
-            height: 6px;
-            transform-origin: 0 50%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
+            z-index: 5;
+            overflow: visible;
         }
         
-        .red-line {
-            background: #ff0000;
-            box-shadow: 0 0 10px rgba(255,0,0,0.8);
-            z-index: 3;
-        }
-        
-        .yellow-line {
-            background: #ffd700;
-            box-shadow: 0 0 15px rgba(255,215,0,0.9);
-            z-index: 2;
-        }
-        
-        .white-line {
-            background: rgba(255, 255, 255, 0.8);
-            box-shadow: 0 0 10px rgba(255,255,255,0.6);
-            z-index: 1;
-            border: 1px dashed rgba(200, 200, 200, 0.8);
-        }
-        
-        .arrow {
+        .control-dot {
             position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 18px solid;
-            border-top: 11px solid transparent;
-            border-bottom: 11px solid transparent;
-            z-index: 4;
-            pointer-events: none;
-        }
-        
-        .red-arrow {
-            border-left-color: #ff0000;
-            filter: drop-shadow(0 0 8px rgba(255,0,0,0.8));
-        }
-        
-        .yellow-arrow {
-            border-left-color: #ffd700;
-            filter: drop-shadow(0 0 10px rgba(255,215,0,0.9));
-        }
-        
-        .path-point {
-            width: 28px;
-            height: 28px;
-            background: rgba(255,215,0,0.9);
-            border: 4px solid #ffd700;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            position: absolute;
-            transform: translate(-50%, -50%);
             cursor: move;
-            z-index: 100;
-            box-shadow: 0 0 20px rgba(255,215,0,1), 0 0 40px rgba(255,215,0,0.5);
-            transition: transform 0.1s;
-        }
-        
-        .path-point:hover {
-            background: rgba(255,255,0,1);
-            transform: translate(-50%, -50%) scale(1.3);
-            box-shadow: 0 0 30px rgba(255,215,0,1);
-        }
-        
-        .path-point.dragging {
-            opacity: 0.9;
-            cursor: grabbing;
-            transform: translate(-50%, -50%) scale(1.2);
-        }
-        
-        .pocket-point {
-            width: 28px;
-            height: 28px;
-            background: rgba(255,0,0,0.9);
-            border: 4px solid #ff0000;
-            border-radius: 50%;
-            position: absolute;
             transform: translate(-50%, -50%);
-            cursor: move;
-            z-index: 100;
-            box-shadow: 0 0 20px rgba(255,0,0,1), 0 0 40px rgba(255,0,0,0.5);
-            transition: transform 0.1s;
+            z-index: 20;
+            transition: all 0.2s;
+            user-select: none;
+            pointer-events: auto;
         }
         
-        .pocket-point:hover {
-            background: rgba(255,50,50,1);
+        .control-dot:hover {
             transform: translate(-50%, -50%) scale(1.3);
-            box-shadow: 0 0 30px rgba(255,0,0,1);
         }
         
-        .pocket-point.dragging {
-            opacity: 0.9;
+        .control-dot:active {
             cursor: grabbing;
-            transform: translate(-50%, -50%) scale(1.2);
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+        
+        .pocket-dot {
+            background: radial-gradient(circle at 30% 30%, #ff6666, #ff0000);
+            border: 3px solid #ffff00;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.8),
+                        0 4px 8px rgba(0,0,0,0.4);
+        }
+        
+        .path-dot {
+            background: radial-gradient(circle at 30% 30%, #ffff66, #ffff00);
+            border: 3px solid #ff8800;
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.8),
+                        0 4px 8px rgba(0,0,0,0.4);
         }
         
         .controls {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .button-group {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            margin-top: 15px;
+            margin: 20px 0;
         }
         
         button {
-            background: #ffd700;
-            color: #000;
-            border: none;
             padding: 12px 24px;
+            font-size: 16px;
+            background: #ffd700;
+            color: #1a472a;
+            border: none;
             border-radius: 8px;
-            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
@@ -271,6 +212,21 @@
         
         button:active {
             transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .preset-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
         }
         
         .legend {
@@ -292,32 +248,27 @@
             border-radius: 5px;
         }
         
-        .coordinates {
+        .info-box {
             background: rgba(0,0,0,0.5);
-            padding: 10px 15px;
-            border-radius: 5px;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            font-family: monospace;
-            font-size: 12px;
-            z-index: 1000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎱 Interactive Shot Diagram - Drag & Drop Editor</h1>
+        <h1>🎱 Interactive Snooker Shot Diagram</h1>
         
         <div class="instructions">
-            <h3>🖱️ How to Use - Just Drag Everything!</h3>
+            <h3>🖱️ How to Use:</h3>
             <ul>
-                <li><strong>Drag balls</strong> to position them anywhere on the table</li>
-                <li><strong>Drag red dot</strong> (at end of red line) to change where black goes to pocket</li>
-                <li><strong>Drag yellow dots</strong> along yellow line to shape the white ball's path</li>
-                <li><strong>Add/Remove points</strong> on yellow path using buttons below</li>
-                <li><strong>Save your diagrams</strong> - create up to 3 presets for different shots</li>
-                <li><strong>Everything updates in real-time!</strong></li>
+                <li><strong>Drag the balls</strong> (white, black, red) to reposition them</li>
+                <li><strong>Drag the RED dot</strong> to change where the black ball goes (pocket target)</li>
+                <li><strong>Drag the YELLOW dots</strong> to shape the white ball's path</li>
+                <li><strong>Add/Remove yellow dots</strong> using buttons below (2-6 control points)</li>
+                <li><strong>Save presets</strong> to remember your shot setups</li>
             </ul>
         </div>
         
@@ -325,314 +276,353 @@
             <div id="table" class="table">
                 <div class="baulk-line"></div>
                 <div class="center-line"></div>
-                <!-- Spots -->
-                <div class="spot" style="left: 20%; top: 50%;"></div>
-                <div class="spot" style="left: 50%; top: 50%;"></div>
-                <div class="spot" style="left: 75%; top: 50%;"></div>
-                <div class="spot" style="left: 92%; top: 50%;"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="addPathPoint()">➕ Add Yellow Dot</button>
+            <button onclick="removePathPoint()">➖ Remove Yellow Dot</button>
+            <button onclick="resetDiagram()">🔄 Reset</button>
+        </div>
+        
+        <div class="controls">
+            <div class="preset-group">
+                <span><strong>Preset 1:</strong></span>
+                <button onclick="savePreset(1)">💾 Save</button>
+                <button onclick="loadPreset(1)">📂 Load</button>
+            </div>
+            <div class="preset-group">
+                <span><strong>Preset 2:</strong></span>
+                <button onclick="savePreset(2)">💾 Save</button>
+                <button onclick="loadPreset(2)">📂 Load</button>
+            </div>
+            <div class="preset-group">
+                <span><strong>Preset 3:</strong></span>
+                <button onclick="savePreset(3)">💾 Save</button>
+                <button onclick="loadPreset(3)">📂 Load</button>
             </div>
         </div>
         
         <div class="legend">
             <div class="legend-item">
-                <div style="width: 50px; height: 6px; background: rgba(255,255,255,0.8); border: 1px dashed rgba(200,200,200,0.8); box-shadow: 0 0 8px rgba(255,255,255,0.6); border-radius: 3px;"></div>
-                <span><strong>WHITE LINE</strong> = Aiming line (white to black)</span>
+                <div style="width: 30px; height: 30px; background: radial-gradient(circle, white, #ccc); border-radius: 50%;"></div>
+                <span><strong>White Ball:</strong> Cue ball position</span>
             </div>
             <div class="legend-item">
-                <div style="width: 50px; height: 6px; background: #ff0000; box-shadow: 0 0 8px #ff0000; border-radius: 3px;"></div>
-                <span><strong>RED LINE</strong> = Black to pocket (drag red dot)</span>
+                <div style="width: 30px; height: 30px; background: radial-gradient(circle, #333, black); border-radius: 50%;"></div>
+                <span><strong>Black Ball:</strong> Object ball</span>
             </div>
             <div class="legend-item">
-                <div style="width: 50px; height: 6px; background: #ffd700; box-shadow: 0 0 8px #ffd700; border-radius: 3px;"></div>
-                <span><strong>YELLOW LINE</strong> = White path after (drag yellow dots)</span>
+                <div style="width: 30px; height: 30px; background: radial-gradient(circle, #ff6666, red); border-radius: 50%;"></div>
+                <span><strong>Red Ball:</strong> Obstructing ball</span>
             </div>
             <div class="legend-item">
-                <div class="ball red target" style="position: static; transform: none; margin: 0;">R</div>
-                <span><strong>GLOWING RED</strong> = Target position (drag to move)</span>
+                <div style="width: 20px; height: 3px; background: white;"></div>
+                <span><strong>White Line:</strong> Aiming line</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 20px; height: 3px; background: red;"></div>
+                <span><strong>Red Line:</strong> Black ball path to pocket</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 20px; height: 3px; background: yellow;"></div>
+                <span><strong>Yellow Line:</strong> White ball curved path</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 24px; height: 24px; background: radial-gradient(circle, #ff6666, red); border: 2px solid yellow; border-radius: 50%;"></div>
+                <span><strong>Red Dot:</strong> Drag to change pocket</span>
+            </div>
+            <div class="legend-item">
+                <div style="width: 24px; height: 24px; background: radial-gradient(circle, #ffff66, yellow); border: 2px solid orange; border-radius: 50%;"></div>
+                <span><strong>Yellow Dots:</strong> Drag to bend path</span>
             </div>
         </div>
         
-        <div class="controls">
-            <h3 style="text-align: center; color: #ffd700;">⚙️ Controls</h3>
-            <div class="button-group">
-                <button onclick="addPathPoint()">➕ Add Yellow Path Point</button>
-                <button onclick="removePathPoint()">➖ Remove Last Point</button>
-                <button onclick="savePreset(1)">💾 Save Preset 1</button>
-                <button onclick="savePreset(2)">💾 Save Preset 2</button>
-                <button onclick="savePreset(3)">💾 Save Preset 3</button>
-                <button onclick="loadPreset(1)">📂 Load Preset 1</button>
-                <button onclick="loadPreset(2)">📂 Load Preset 2</button>
-                <button onclick="loadPreset(3)">📂 Load Preset 3</button>
-                <button onclick="resetToExample()">↺ Reset Example</button>
-            </div>
-        </div>
-        
-        <div class="coordinates" id="coords">
-            Mouse: X=0, Y=0
+        <div class="info-box">
+            <p><strong>💡 Tip:</strong> Shows a swerve/spin shot where the cue ball curves around the red to pot the black.</p>
         </div>
     </div>
-    
+
     <script>
-        // State
+        // State - using simple percentage coordinates
         let state = {
-            white: {x: 60, y: 50},
-            black: {x: 92, y: 50},
-            red: {x: 40, y: 50},
-            pocket: {x: 98, y: 50},
+            white: { x: 85, y: 50 },
+            black: { x: 60, y: 50 },
+            red: { x: 40, y: 50 },
+            pocket: { x: 8, y: 50 },
             path: [
-                {x: 60, y: 50},  // Start at white
-                {x: 92, y: 50},  // Contact with black
-                {x: 70, y: 50},  // Mid point
-                {x: 42, y: 50}   // End near red
+                { x: 85, y: 50 },  // Start at white ball
+                { x: 55, y: 35 },  // Curve point 1
+                { x: 8, y: 50 }    // End at pocket
             ]
         };
-        
-        let dragging = null;
-        let dragType = null; // 'ball', 'pocket', 'path'
+
+        let isDragging = false;
+        let dragTarget = null;
+        let dragType = null;
         let dragIndex = null;
-        
-        const table = document.getElementById('table');
-        const tableRect = table.getBoundingClientRect();
-        
-        // Update coordinates display
-        table.addEventListener('mousemove', (e) => {
-            const rect = table.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-            const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
-            document.getElementById('coords').textContent = `Mouse: X=${x}, Y=${y}`;
-        });
-        
-        function getTableCoords(clientX, clientY) {
-            const rect = table.getBoundingClientRect();
-            const x = Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100));
-            const y = Math.max(0, Math.min(100, (clientY - rect.top) / rect.height * 100));
-            return {x, y};
+
+        function init() {
+            drawDiagram();
+            setupEventListeners();
         }
-        
+
         function drawDiagram() {
-            // Clear
-            table.innerHTML = `
-                <div class="baulk-line"></div>
-                <div class="center-line"></div>
-                <div class="spot" style="left: 20%; top: 50%;"></div>
-                <div class="spot" style="left: 50%; top: 50%;"></div>
-                <div class="spot" style="left: 75%; top: 50%;"></div>
-                <div class="spot" style="left: 92%; top: 50%;"></div>
-            `;
+            const table = document.getElementById('table');
             
-            // Calculate contact point (where white ball contacts black ball)
-            // The contact point is 1 ball radius away from black ball center
+            // Clear existing elements (except static ones)
+            Array.from(table.children).forEach(child => {
+                if (!child.classList.contains('baulk-line') && !child.classList.contains('center-line')) {
+                    child.remove();
+                }
+            });
+
+            // Create SVG for lines
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.pointerEvents = 'none';
+            table.appendChild(svg);
+
+            // Calculate contact point for white line (where white touches black)
             const dx = state.black.x - state.white.x;
             const dy = state.black.y - state.white.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const ballRadius = 2.5; // As percentage of table (approximate)
-            
-            // Contact point is ballRadius distance back from black ball center
-            const contactX = state.black.x - (dx / distance) * ballRadius;
-            const contactY = state.black.y - (dy / distance) * ballRadius;
-            
-            // Draw white aiming line (white to contact point on black)
-            drawLine(state.white.x, state.white.y, contactX, contactY, 'white-line', null);
-            
-            // Draw red line (black to pocket)
-            drawLine(state.black.x, state.black.y, state.pocket.x, state.pocket.y, 'red-line', 'red-arrow');
-            
-            // Draw yellow path
-            for (let i = 0; i < state.path.length - 1; i++) {
-                drawLine(state.path[i].x, state.path[i].y, state.path[i+1].x, state.path[i+1].y, 'yellow-line', i === state.path.length - 2 ? 'yellow-arrow' : null);
+            const ballRadiusPercent = 2; // Ball radius in percentage of table width
+            const contactPoint = {
+                x: state.black.x - (dx / distance) * ballRadiusPercent,
+                y: state.black.y - (dy / distance) * ballRadiusPercent
+            };
+
+            // White aiming line (white ball center to contact point on black)
+            const whiteLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            whiteLine.setAttribute('x1', state.white.x + '%');
+            whiteLine.setAttribute('y1', state.white.y + '%');
+            whiteLine.setAttribute('x2', contactPoint.x + '%');
+            whiteLine.setAttribute('y2', contactPoint.y + '%');
+            whiteLine.setAttribute('stroke', 'white');
+            whiteLine.setAttribute('stroke-width', '2.5');
+            whiteLine.setAttribute('stroke-dasharray', '5,5');
+            svg.appendChild(whiteLine);
+
+            // Red line (black ball center to pocket)
+            const redLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            redLine.setAttribute('x1', state.black.x + '%');
+            redLine.setAttribute('y1', state.black.y + '%');
+            redLine.setAttribute('x2', state.pocket.x + '%');
+            redLine.setAttribute('y2', state.pocket.y + '%');
+            redLine.setAttribute('stroke', 'red');
+            redLine.setAttribute('stroke-width', '4');
+            svg.appendChild(redLine);
+
+            // Yellow curved path - THE CUE BALL PATH
+            // Draw as individual line segments for better visibility
+            if (state.path.length >= 2) {
+                for (let i = 0; i < state.path.length - 1; i++) {
+                    const segment = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    segment.setAttribute('x1', state.path[i].x + '%');
+                    segment.setAttribute('y1', state.path[i].y + '%');
+                    segment.setAttribute('x2', state.path[i + 1].x + '%');
+                    segment.setAttribute('y2', state.path[i + 1].y + '%');
+                    segment.setAttribute('stroke', '#FFFF00');
+                    segment.setAttribute('stroke-width', '6');
+                    segment.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(segment);
+                }
+                console.log('Yellow path drawn with', state.path.length, 'points as line segments');
             }
-            
-            // Draw pocket control point
-            const pocketPoint = document.createElement('div');
-            pocketPoint.className = 'pocket-point';
-            pocketPoint.style.left = state.pocket.x + '%';
-            pocketPoint.style.top = state.pocket.y + '%';
-            pocketPoint.dataset.type = 'pocket';
-            pocketPoint.title = 'Drag to change pocket position';
-            table.appendChild(pocketPoint);
-            
-            // Draw path control points (skip first point which is white ball)
-            for (let i = 1; i < state.path.length; i++) {
-                const pathPoint = document.createElement('div');
-                pathPoint.className = 'path-point';
-                pathPoint.style.left = state.path[i].x + '%';
-                pathPoint.style.top = state.path[i].y + '%';
-                pathPoint.dataset.type = 'path';
-                pathPoint.dataset.index = i;
-                pathPoint.title = `Path point ${i}: Drag to adjust`;
-                table.appendChild(pathPoint);
-            }
-            
+
             // Draw balls
-            drawBall(state.white.x, state.white.y, 'white', 'W', 'white');
-            drawBall(state.black.x, state.black.y, 'black', 'Bk', 'black');
-            drawBall(state.red.x, state.red.y, 'red target', 'R', 'red');
+            drawBall('white', state.white.x, state.white.y, 'white');
+            drawBall('black', state.black.x, state.black.y, 'black');
+            drawBall('red', state.red.x, state.red.y, 'red');
+
+            // Draw control dots
+            // Red dot for pocket control
+            drawControlDot('pocket', state.pocket.x, state.pocket.y, 'pocket-dot');
             
-            // Re-attach event listeners
-            attachDragListeners();
-        }
-        
-        function drawLine(x1, y1, x2, y2, lineClass, arrowClass) {
-            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-            
-            const line = document.createElement('div');
-            line.className = `line ${lineClass}`;
-            line.style.left = x1 + '%';
-            line.style.top = y1 + '%';
-            line.style.width = length + '%';
-            line.style.transform = `rotate(${angle}deg)`;
-            table.appendChild(line);
-            
-            if (arrowClass) {
-                const arrow = document.createElement('div');
-                arrow.className = `arrow ${arrowClass}`;
-                arrow.style.left = x2 + '%';
-                arrow.style.top = y2 + '%';
-                arrow.style.transform = `translate(-18px, -11px) rotate(${angle}deg)`;
-                table.appendChild(arrow);
+            // Yellow dots for path control (skip first point at white ball, skip last point at pocket)
+            for (let i = 1; i < state.path.length - 1; i++) {
+                drawControlDot('path', state.path[i].x, state.path[i].y, 'path-dot', i);
             }
         }
-        
-        function drawBall(x, y, className, label, type) {
+
+        function drawBall(id, x, y, className) {
             const ball = document.createElement('div');
             ball.className = `ball ${className}`;
             ball.style.left = x + '%';
             ball.style.top = y + '%';
-            ball.textContent = label;
-            ball.dataset.type = type;
-            ball.title = `Drag to move ${label}`;
-            table.appendChild(ball);
+            ball.dataset.type = 'ball';
+            ball.dataset.id = id;
+            document.getElementById('table').appendChild(ball);
         }
-        
-        function attachDragListeners() {
-            const balls = table.querySelectorAll('.ball');
-            const pockets = table.querySelectorAll('.pocket-point');
-            const paths = table.querySelectorAll('.path-point');
-            
-            [...balls, ...pockets, ...paths].forEach(el => {
-                el.addEventListener('mousedown', startDrag);
-                el.addEventListener('touchstart', startDrag);
-            });
+
+        function drawControlDot(type, x, y, className, index) {
+            const dot = document.createElement('div');
+            dot.className = `control-dot ${className}`;
+            dot.style.left = x + '%';
+            dot.style.top = y + '%';
+            dot.dataset.type = type;
+            if (index !== undefined) {
+                dot.dataset.index = index;
+            }
+            document.getElementById('table').appendChild(dot);
         }
-        
-        function startDrag(e) {
-            e.preventDefault();
-            dragging = e.target;
-            dragType = dragging.dataset.type;
-            dragIndex = dragging.dataset.index ? parseInt(dragging.dataset.index) : null;
-            dragging.classList.add('dragging');
+
+        function setupEventListeners() {
+            const table = document.getElementById('table');
             
+            table.addEventListener('mousedown', startDrag);
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', stopDrag);
+            
+            table.addEventListener('touchstart', startDrag);
             document.addEventListener('touchmove', drag);
             document.addEventListener('touchend', stopDrag);
         }
-        
-        function drag(e) {
-            if (!dragging) return;
+
+        function startDrag(e) {
             e.preventDefault();
+            const target = e.target;
             
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            const coords = getTableCoords(clientX, clientY);
+            if (target.classList.contains('ball')) {
+                isDragging = true;
+                dragTarget = target;
+                dragType = 'ball';
+                dragTarget.style.zIndex = '50';
+            } else if (target.classList.contains('control-dot')) {
+                isDragging = true;
+                dragTarget = target;
+                dragType = target.dataset.type;
+                if (dragType === 'path') {
+                    dragIndex = parseInt(target.dataset.index);
+                }
+                dragTarget.style.zIndex = '50';
+            }
+        }
+
+        function drag(e) {
+            if (!isDragging || !dragTarget) return;
             
-            if (dragType === 'white') {
-                state.white = coords;
-                state.path[0] = coords; // Update first path point
-            } else if (dragType === 'black') {
-                state.black = coords;
-            } else if (dragType === 'red') {
-                state.red = coords;
+            e.preventDefault();
+            const table = document.getElementById('table');
+            const rect = table.getBoundingClientRect();
+            
+            let clientX, clientY;
+            if (e.type.startsWith('touch')) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const x = ((clientX - rect.left) / rect.width) * 100;
+            const y = ((clientY - rect.top) / rect.height) * 100;
+            
+            // Constrain to table
+            const constrainedX = Math.max(2, Math.min(98, x));
+            const constrainedY = Math.max(2, Math.min(98, y));
+            
+            if (dragType === 'ball') {
+                const ballId = dragTarget.dataset.id;
+                state[ballId].x = constrainedX;
+                state[ballId].y = constrainedY;
+                
+                // Update white ball path start
+                if (ballId === 'white') {
+                    state.path[0].x = constrainedX;
+                    state.path[0].y = constrainedY;
+                }
             } else if (dragType === 'pocket') {
-                state.pocket = coords;
-            } else if (dragType === 'path' && dragIndex !== null) {
-                state.path[dragIndex] = coords;
+                state.pocket.x = constrainedX;
+                state.pocket.y = constrainedY;
+                // Update path end point
+                state.path[state.path.length - 1].x = constrainedX;
+                state.path[state.path.length - 1].y = constrainedY;
+            } else if (dragType === 'path') {
+                state.path[dragIndex].x = constrainedX;
+                state.path[dragIndex].y = constrainedY;
             }
             
             drawDiagram();
         }
-        
-        function stopDrag() {
-            if (dragging) {
-                dragging.classList.remove('dragging');
-                dragging = null;
+
+        function stopDrag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                isDragging = false;
+                if (dragTarget) {
+                    dragTarget.style.zIndex = '';
+                }
+                dragTarget = null;
                 dragType = null;
                 dragIndex = null;
             }
-            document.removeEventListener('mousemove', drag);
-            document.removeEventListener('mouseup', stopDrag);
-            document.removeEventListener('touchmove', drag);
-            document.removeEventListener('touchend', stopDrag);
         }
-        
+
         function addPathPoint() {
-            if (state.path.length >= 6) {
-                alert('Maximum 6 path points!');
+            // Max 10 path points total (including start and end)
+            if (state.path.length >= 10) {
+                alert('⚠️ Maximum 10 path points!');
                 return;
             }
-            // Add point between last two points
+            
+            // Add between last two points
             const lastIdx = state.path.length - 1;
             const newPoint = {
-                x: (state.path[lastIdx].x + state.path[lastIdx-1].x) / 2,
-                y: (state.path[lastIdx].y + state.path[lastIdx-1].y) / 2
+                x: (state.path[lastIdx - 1].x + state.path[lastIdx].x) / 2,
+                y: (state.path[lastIdx - 1].y + state.path[lastIdx].y) / 2
             };
+            
             state.path.splice(lastIdx, 0, newPoint);
             drawDiagram();
         }
-        
+
         function removePathPoint() {
+            // Min 2 points (start and end)
             if (state.path.length <= 2) {
-                alert('Need at least 2 path points!');
+                alert('⚠️ Need at least 2 path points!');
                 return;
             }
-            state.path.splice(state.path.length - 1, 1);
+            
+            // Remove second-to-last (keep start and end)
+            state.path.splice(state.path.length - 2, 1);
             drawDiagram();
         }
-        
+
+        function resetDiagram() {
+            if (confirm('🔄 Reset to default?')) {
+                state = {
+                    white: { x: 85, y: 50 },
+                    black: { x: 60, y: 50 },
+                    red: { x: 40, y: 50 },
+                    pocket: { x: 8, y: 50 },
+                    path: [
+                        { x: 85, y: 50 },
+                        { x: 55, y: 35 },
+                        { x: 8, y: 50 }
+                    ]
+                };
+                drawDiagram();
+            }
+        }
+
         function savePreset(num) {
             localStorage.setItem(`snookerPreset${num}`, JSON.stringify(state));
-            alert(`Preset ${num} saved!`);
+            alert(`✅ Preset ${num} saved!`);
         }
-        
+
         function loadPreset(num) {
             const preset = localStorage.getItem(`snookerPreset${num}`);
             if (preset) {
                 state = JSON.parse(preset);
                 drawDiagram();
-                alert(`Preset ${num} loaded!`);
+                alert(`✅ Preset ${num} loaded!`);
             } else {
-                alert(`No preset ${num} saved yet!`);
+                alert(`❌ No preset ${num} saved yet!`);
             }
         }
-        
-        function resetToExample() {
-            state = {
-                white: {x: 60, y: 50},
-                black: {x: 92, y: 50},
-                red: {x: 40, y: 50},
-                pocket: {x: 98, y: 50},
-                path: [
-                    {x: 60, y: 50},
-                    {x: 92, y: 50},
-                    {x: 70, y: 50},
-                    {x: 42, y: 50}
-                ]
-            };
-            drawDiagram();
-        }
-        
-        // Initial draw
-        drawDiagram();
-        
-        // Check if we should load data from practice tracker
-        const dataToLoad = sessionStorage.getItem('diagramToEdit');
-        if (dataToLoad) {
-            state = JSON.parse(dataToLoad);
-            drawDiagram();
-            sessionStorage.removeItem('diagramToEdit'); // Clear after loading
-            alert('Diagram loaded from practice tracker! Drag to customize, then save as preset.');
-        }
+
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
